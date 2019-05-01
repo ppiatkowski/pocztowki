@@ -57,12 +57,21 @@ def calculateExpandedImage(filename, paperSize, imageSize, mode):
           (widthRatio, heightRatio, targetRatio))
 
     image = Image.open(filename)
-    inputImageSize = Size(image.width, image.height)
+    inputImageSize = Size(int(image.width), int(image.height))
     inputImageSize.print("INPUT IMAGE", "px")
 
-    outputImageSize = Size(inputImageSize.width / targetRatio,
-                           inputImageSize.height / targetRatio)
+    outputImageSize = Size(int(inputImageSize.width / targetRatio),
+                           int(inputImageSize.height / targetRatio))
     outputImageSize.print("OUTPUT_IMAGE", "px")
+
+    newSize = (outputImageSize.width, outputImageSize.height)
+    outputImage = Image.new("RGB", newSize, (255, 255, 255))
+
+    outputImage.paste(image, (int((newSize[0] - inputImageSize.width)/2),
+                              int((newSize[1] - inputImageSize.height)/2)))
+    outputFilename = "out_" + filename
+    outputImage.save(outputFilename)
+    print("Output image saved to %s" % (outputFilename))
 
 
 if __name__ == "__main__":
