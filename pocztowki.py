@@ -33,15 +33,18 @@ def main(argv):
         inputImageSize.print("INPUT IMAGE", "px")
 
         outputImageSize = calculateOutputImageSize(inputImageSize, paperSize, imageSize, args.mode)
-        createOutputImage(outputImageSize, inputImage, "out2_" + args.image)
-        outputImageSizeOld = calculateOutputImageSizeOld(inputImageSize, paperSize, imageSize, args.mode)
-        createOutputImage(outputImageSizeOld, inputImage, "outOld_" + args.image)
+        createOutputImage(outputImageSize, inputImage, "out_" + args.image)
 
     except FileNotFoundError:
         logging.error("File not found")
 
 
 def calculateOutputImageSize(inputImageSize, paperSize, passpartoutSize, mode):
+    # if image is in portrait orientation rotate paper and passpartout to portrait as well
+    if inputImageSize.height > inputImageSize.width:
+        paperSize = Size(paperSize.height, paperSize.width)
+        passpartoutSize = Size(passpartoutSize.height, passpartoutSize.width)
+
     paperSize.print("PAPER", "mm")
     passpartoutSize.print("PASSPARTOUT", "mm")
 
@@ -60,51 +63,20 @@ def calculateOutputImageSize(inputImageSize, paperSize, passpartoutSize, mode):
             idealSize = Size(idealWidth, passpartoutSize.height)
     elif mode == "aspectFit":
         raise ValueError("aspectFit not supported yet")
-        # pixelDensity = min(widthDensity, heightDensity)
     else:
         raise ValueError("Invalid mode (%s)" % (mode))
 
     logging.info("Lost image part %dmm x %dmm", passpartoutSize.width - idealSize.width, passpartoutSize.height - idealSize.height)
-
     logging.debug("   ideal size: %dmm x %dmm   density: %f", idealSize.width, idealSize.height, pixelDensity)
 
     additionalPixels = Size((paperSize.width - idealSize.width) * pixelDensity,
                             (paperSize.height - idealSize.height) * pixelDensity)
-
     logging.debug("   additionalPixels: %d x %d", additionalPixels.width, additionalPixels.height)
 
     assert(additionalPixels.width > 0)
     assert(additionalPixels.height > 0)
     finalSize = Size(inputImageSize.width + additionalPixels.width,
                      inputImageSize.height + additionalPixels.height)
-    logging.debug("   final size: %dpx x %dpx", finalSize.width, finalSize.height)
-    return finalSize
-
-
-# def calculateOutputImageSizeOld(inputFilename, paperSize, imageSize, mode):
-def calculateOutputImageSizeOld(inputImageSize, paperSize, passpartoutSize, mode):
-    paperSize.print("PAPER", "mm")
-    passpartoutSize.print("PASSPARTOUT", "mm")
-
-    heightRatio = float(inputImageSize.height) / paperSize.height
-    widthRatio = float(inputImageSize.width) / paperSize.width
-
-    if mode == "aspectFill":
-        targetRatio = max(heightRatio, widthRatio)
-    elif mode == "aspectFit":
-        targetRatio = min(heightRatio, widthRatio)
-    else:
-        raise ValueError("Invalid mode (%s)" % (mode))
-
-    logging.debug("I/P w=%f h=%f targetRatio=%f", widthRatio, heightRatio, targetRatio)
-
-    inputImageSize.print("INPUT IMAGE", "px")
-
-    outputImageSize = Size(int(inputImageSize.width / targetRatio),
-                           int(inputImageSize.height / targetRatio))
-    outputImageSize.print("OUTPUT_IMAGE", "px")
-
-    finalSize = Size(outputImageSize.width, outputImageSize.height)
     logging.debug("   final size: %dpx x %dpx", finalSize.width, finalSize.height)
     return finalSize
 
