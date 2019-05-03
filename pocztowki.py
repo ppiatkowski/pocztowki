@@ -3,8 +3,18 @@ import argparse
 import logging
 from PIL import Image
 
+# Given:
+#  1. Print paper size
+#  2. Passepartout size
+#  3. Picture to be printed
+# This tool will create an image with added white border of the right size so that input image will fit into the passepartout
+# Aspect ratio of the image will be maintaned. If aspect ratio of picture is different than passepartout aspect ratio then:
+#  1. (default) aspect fill algorithm will be used. Aspect fill will make sure that whole are of passepartout will be used but some part of the image will be covered by passepartout.
+#  2. aspect fit can be used using --mode option. Aspect fit will make sure that whole image is visible but you will get white strips at the edges.
+
 
 class Size:
+    # helper class
     def __init__(self, width, height):
         self.width = width
         self.height = height
@@ -14,7 +24,7 @@ class Size:
 
 
 def main(argv):
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
 
     parser = argparse.ArgumentParser()
     parser.add_argument("image")
@@ -51,22 +61,16 @@ def calculateOutputImageSize(inputImageSizePx, paperSize, passpartoutSize, mode)
     widthDensity = float(inputImageSizePx.width) / passpartoutSize.width
     heightDensity = float(inputImageSizePx.height) / passpartoutSize.height
 
-    # TODO extract to function that returns ideal size
     if mode == "aspectFill":
-        if widthDensity < heightDensity:
-            pixelDensity = widthDensity
-            idealHeight = float(inputImageSize.height) / pixelDensity
-            idealSize = Size(passpartoutSize.width, idealHeight)
-        else:
-            pixelDensity = heightDensity
-            idealWidth = float(inputImageSize.width) / pixelDensity
-            idealSize = Size(idealWidth, passpartoutSize.height)
+        pixelDensity = min(widthDensity, heightDensity)
     elif mode == "aspectFit":
-        raise ValueError("aspectFit not supported yet")
+        pixelDensity = max(widthDensity, heightDensity)
     else:
         raise ValueError("Invalid mode (%s)" % (mode))
 
-    logging.info("Lost image part %dmm x %dmm", passpartoutSize.width - idealSize.width, passpartoutSize.height - idealSize.height)
+    idealSize = Size(float(inputImageSizePx.width) / pixelDensity, float(inputImageSizePx.height) / pixelDensity)
+    logging.info("Aspect ratio difference will cost you %dmm x %dmm of space",
+                 passpartoutSize.width - idealSize.width, passpartoutSize.height - idealSize.height)
     logging.debug("   ideal size: %dmm x %dmm   density: %f", idealSize.width, idealSize.height, pixelDensity)
 
     additionalPixels = Size((paperSize.width - idealSize.width) * pixelDensity,
