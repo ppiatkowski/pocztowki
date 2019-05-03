@@ -19,37 +19,37 @@ def main(argv):
     parser = argparse.ArgumentParser()
     parser.add_argument("image")
     parser.add_argument("-m", "--mode", required=False, default="aspectFill")
-    parser.add_argument("-pw", "--paper_width", help="Paper width", required=True)
-    parser.add_argument("-ph", "--paper_height", help="Paper height", required=True)
-    parser.add_argument("-iw", "--image_width", help="Image width", required=True)
-    parser.add_argument("-ih", "--image_height", help="Image height", required=True)
+    parser.add_argument("-pw", "--paper_width", help="Paper width in mm", required=True)
+    parser.add_argument("-ph", "--paper_height", help="Paper height in mm", required=True)
+    parser.add_argument("-ppw", "--passepartout_width", help="Passepartout width in mm", required=True)
+    parser.add_argument("-pph", "--passepartout_height", help="Passepartout height in mm", required=True)
     args = parser.parse_args()
 
     try:
         paperSize = Size(int(args.paper_width), int(args.paper_height))
-        imageSize = Size(int(args.image_width), int(args.image_height))
+        passepartoutSize = Size(int(args.passepartout_width), int(args.passepartout_height))
         inputImage = Image.open(args.image)
-        inputImageSize = Size(int(inputImage.width), int(inputImage.height))
-        inputImageSize.print("INPUT IMAGE", "px")
+        inputImageSizePx = Size(int(inputImage.width), int(inputImage.height))
+        inputImageSizePx.print("INPUT IMAGE", "px")
 
-        outputImageSize = calculateOutputImageSize(inputImageSize, paperSize, imageSize, args.mode)
+        outputImageSize = calculateOutputImageSize(inputImageSizePx, paperSize, passepartoutSize, args.mode)
         createOutputImage(outputImageSize, inputImage, "out_" + args.image)
 
     except FileNotFoundError:
         logging.error("File not found")
 
 
-def calculateOutputImageSize(inputImageSize, paperSize, passpartoutSize, mode):
+def calculateOutputImageSize(inputImageSizePx, paperSize, passpartoutSize, mode):
     # if image is in portrait orientation rotate paper and passpartout to portrait as well
-    if inputImageSize.height > inputImageSize.width:
+    if inputImageSizePx.height > inputImageSizePx.width:
         paperSize = Size(paperSize.height, paperSize.width)
         passpartoutSize = Size(passpartoutSize.height, passpartoutSize.width)
 
     paperSize.print("PAPER", "mm")
     passpartoutSize.print("PASSPARTOUT", "mm")
 
-    widthDensity = float(inputImageSize.width) / passpartoutSize.width
-    heightDensity = float(inputImageSize.height) / passpartoutSize.height
+    widthDensity = float(inputImageSizePx.width) / passpartoutSize.width
+    heightDensity = float(inputImageSizePx.height) / passpartoutSize.height
 
     # TODO extract to function that returns ideal size
     if mode == "aspectFill":
@@ -75,8 +75,8 @@ def calculateOutputImageSize(inputImageSize, paperSize, passpartoutSize, mode):
 
     assert(additionalPixels.width > 0)
     assert(additionalPixels.height > 0)
-    finalSize = Size(inputImageSize.width + additionalPixels.width,
-                     inputImageSize.height + additionalPixels.height)
+    finalSize = Size(inputImageSizePx.width + additionalPixels.width,
+                     inputImageSizePx.height + additionalPixels.height)
     logging.debug("   final size: %dpx x %dpx", finalSize.width, finalSize.height)
     return finalSize
 
