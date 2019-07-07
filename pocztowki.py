@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import sys
 import argparse
 import logging
@@ -24,7 +26,6 @@ class Size:
 
 
 def main(argv):
-    logging.basicConfig(level=logging.INFO)
 
     parser = argparse.ArgumentParser()
     parser.add_argument("image")
@@ -33,7 +34,13 @@ def main(argv):
     parser.add_argument("-ph", "--paper_height", help="Paper height in mm", required=True)
     parser.add_argument("-ppw", "--passepartout_width", help="Passepartout width in mm", required=True)
     parser.add_argument("-pph", "--passepartout_height", help="Passepartout height in mm", required=True)
+    parser.add_argument("-v", "--verbose", help="Verbose logging", action="store_true")
     args = parser.parse_args()
+
+    if args.verbose:
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
 
     try:
         paperSize = Size(int(args.paper_width), int(args.paper_height))
